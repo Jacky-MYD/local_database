@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>localDB</title>
+    <script src="./myStorage.js" > </script>
+    <script src="./json2.js" > </script>
+    <script src="./localDB.js" > </script>
+
+    <script type="text/javascript" >
+
+        //创建一个叫Animal存储空间
+        function createdAnimal() {
+            localDB.createSpace("Animal");
+        }
+
+        //可以向Animal插入任何类型的数据
+        function insertData() {
+            localDB.insert("Animal", "猴子");
+            localDB.insert("Animal", {name:"金丝猴",price:28});
+            localDB.insert("Animal", false);
+            localDB.insert("Animal", [1,2,3]);
+        }
+
+        //更新某个数据，第二个参数需要跟插入时对应的参数的值一模一样
+        function upData() {
+            localDB.update("Animal", "猴子", "猩猩");
+            localDB.update("Animal", {name:"金丝猴",price:28}, {name:"大猩猩",price:31})
+        }
+
+
+        //按条件查询数据并返回结果数组，最多可按条件深度挖掘到空间的第三层数据，有兴趣的童鞋可以加个递归让它不停挖掘数据
+        function searchData() {
+            var some = localDB.select("Animal","猩猩", false);
+            //不输入第二、三参数则查找空间中全部数据
+            var all = localDB.select("Animal");
+        }
+
+        function deleteData() {
+            //删除空间中的数据，第二个参数需要跟插入时对应的参数值一模一样
+            localDB.delete("Animal","猩猩");
+            //删除Coffe空间，空间所有数据丢失
+            localDB.deleteSpace("Animal");
+        }
+
+
+    </script>
+</head>
+<body>
+    <h3>localDB的demo</h3>
+    <button onClick="createdAnimal()">创建Animal空间</button>
+    <button onclick="insertData()">给Animal空间插入数据</button>
+    <button onclick="upData()">更新数据</button>
+    <button onclick="searchData()">查询数据</button>
+    <button onclick="deleteData()">删除数据</button>
+</body>
+</html>

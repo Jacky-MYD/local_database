@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>webSql</title>
+    <script type="text/javascript" src="./jquery/jquery-2.1.1.min.js"></script>
+    <script type="text/javascript">
+        /**
+         * openDatabase() 方法对应的五个参数说明：
+         * 数据库名称
+         * 版本号
+         * 描述文本
+         * 数据库大小
+         * 创建回调
+         * 第五个参数，创建回调会在创建数据库后被调用。
+         * @type {Database}
+         */
+        // 我们可以使用 openDatabase() 方法来打开已存在的数据库，如果数据库不存在，则会创建一个新的数据库
+        var db = openDatabase('mydb', '1.0', 'Test DB', 2 * 1024 * 1024);
+        console.log(db)
+        var msg;
+        function created() {
+            document.querySelector('.cotent').innerHTML = '';
+            db.transaction(function (tx) {
+                tx.executeSql('CREATE TABLE IF NOT EXISTS LOGS (id unique, log)'); // unique表示唯一
+                tx.executeSql('INSERT INTO LOGS (id, log) VALUES (1, "第一条数据")');
+                tx.executeSql('INSERT INTO LOGS (id, log) VALUES (2, "第二条数据")');
+
+                // 动态添加数据 实例中的 e_id 和 e_log 是外部变量，executeSql 会映射数组参数中的每个条目给 "?"。
+                // tx.executeSql('INSERT INTO LOGS (id,log) VALUES (?, ?)', [e_id, e_log]);
+                msg = '<p>数据表已创建，且插入数据。</p>';
+                document.querySelector('.cotent').innerHTML =  msg;
+            });
+
+            db.transaction(function (tx) {
+                console.log(tx);
+                tx.executeSql('SELECT * FROM LOGS', [], function (tx, results) {
+                    console.log(results);
+                    var len = results.rows.length, i;
+                    msg = "<p>查询记录条数: " + len + "</p>";
+                    document.querySelector('.cotent').innerHTML +=  msg;
+
+                    for (i = 0; i < len; i++){
+                        msg = "<p><b>" + results.rows.item(i).log + "</b></p>";
+                        document.querySelector('.cotent').innerHTML +=  msg;
+                    }
+                }, null);
+            });
+        };
+        function deleted() {
+            document.querySelector('.cotent').innerHTML = '';
+            db.transaction(function (tx) {
+                tx.executeSql('DELETE FROM LOGS  WHERE id=1');
+
+                // 动态删除数据
+                // tx.executeSql('DELETE FROM LOGS WHERE id=?', [id]);
+                msg = '<p>删除 id 为 1 的记录。</p>';
+                document.querySelector('.cotent').innerHTML =  msg;
+            });
+            db.transaction(function (tx) {
+                console.log(tx);
+                tx.executeSql('SELECT * FROM LOGS', [], function (tx, results) {
+                    console.log(results);
+                    var len = results.rows.length, i;
+                    msg = "<p>查询记录条数: " + len + "</p>";
+                    document.querySelector('.cotent').innerHTML += msg;
+
+                    for (i = 0; i < len; i++) {
+                        msg = "<p><b>" + results.rows.item(i).log + "</b></p>";
+                        document.querySelector('.cotent').innerHTML += msg;
+                    }
+                }, null);
+            })
+        }
+        function upData() {
+            document.querySelector('.cotent').innerHTML = '';
+            db.transaction(function (tx) {
+                tx.executeSql('SELECT * FROM LOGS', [], function (tx, results) {
+                    var len = results.rows.length, i;
+                    for (i = 0; i < len; i++){
+                        if (results.rows.item(i).log != 1) {
+                            tx.executeSql('INSERT INTO LOGS (id, log) VALUES (1, "重新插入了一条id为1的数据")');
+                        }
+                    }
+                }, null);
+                tx.executeSql('UPDATE LOGS SET log="我修改了id为2的数据" WHERE id=2');
+
+                // 动态更新数据
+                // tx.executeSql('UPDATE LOGS SET log=\'我修改了id为2的数据\' WHERE id=?', [id]);
+            });
+            db.transaction(function (tx) {
+                console.log(tx);
+                tx.executeSql('SELECT * FROM LOGS', [], function (tx, results) {
+                    console.log(results);
+                    var len = results.rows.length, i;
+                    msg = "<p>查询记录条数: " + len + "</p>";
+                    document.querySelector('.cotent').innerHTML +=  msg;
+
+                    for (i = 0; i < len; i++){
+                        msg = "<p><b>" + results.rows.item(i).log + "</b></p>";
+                        document.querySelector('.cotent').innerHTML +=  msg;
+                    }
+                }, null);
+            });
+        }
+
+        function deleteFrom(tableName){
+            document.querySelector('.cotent').innerHTML = '';
+            var deleteTableSQL = 'DELETE FROM ' + tableName;
+            localStorage.removeItem(tableName);
+            db.transaction(function (tx) {
+                tx.executeSql(deleteTableSQL,[],function(tx,results){
+                    alert("删除表成功 " + tableName);
+                    var len = results.rows.length, i;
+                    msg = "<p>查询记录条数: " + len + "</p>";
+                    document.querySelector('.cotent').innerHTML +=  msg;
+
+                    for (i = 0; i < len; i++){
+                        msg = "<p><b>" + results.rows.item(i).log + "</b></p>";
+                        document.querySelector('.cotent').innerHTML +=  msg;
+                    }
+                },function(tx, error){
+                    alert('删除表失败:' + tableName + error.message);
+                });
+            });
+        }
+    </script>
+</head>
+<body>
+    <div id="status" name="status">状态信息</div><br />
+    <button id="createBtn" onClick="created()">创建表格</button>
+    <button id="deleteBtn" onClick="deleted()">删除表格的数据</button>
+    <button id="upDataBtn" onClick="upData()">更新表格数据</button>
+    <button id="deleteFrom" onClick="deleteFrom('LOGS')">清除表格</button>
+    <div class="cotent"></div>
+</body>
+</html>
